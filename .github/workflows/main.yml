@@ -110,5 +110,3 @@ jobs:
             docker tag "$IMAGE_NAME" "$PUBLIC_IMAGE_NAME:latest"
             docker push "$PUBLIC_IMAGE_NAME:$IMAGE_VERSION"
             docker push "$PUBLIC_IMAGE_NAME:latest"
-          status: "Scheduled Research Template Docker image build or publish failure"
-          color: danger
