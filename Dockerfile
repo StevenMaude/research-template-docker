@@ -17,24 +17,40 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 # hadolint ignore=DL3008,DL3009
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
-    echo "deb http://ppa.launchpadcontent.net/deadsnakes/ppa/ubuntu focal main" > /etc/apt/sources.list.d/deadsnakes-ppa.list &&\
-    /usr/lib/apt/apt-helper download-file 'https://keyserver.ubuntu.com/pks/lookup?op=get&search=0xf23c5a6cf475977595c89f51ba6932366a755776' /etc/apt/trusted.gpg.d/deadsnakes.asc &&\
     apt-get update &&\
     apt-get install -y \
     # Install a command-line editor for working with Git.
     nano \
-    # Install python 3.10. This is the version used by the python-docker
-    # image, used for analyses using the OpenSAFELY pipeline.
-    --no-install-recommends curl python3.10 python3.10-distutils python3.10-venv \
+    --no-install-recommends curl \
     # Install dependencies for R tidyverse, knitr, and dagitty packages.
-    libxml2 libmagick++-6.q16-8 libnode-dev &&\
-    # Pip for Python 3.10 isn't included in deadsnakes, so install separately
-    curl https://bootstrap.pypa.io/get-pip.py | python3.10 &&\
-    # Set default python, so that the Python virtualenv works as expected
-    rm /usr/bin/python3 &&\
-    ln -s /usr/bin/python3.10 /usr/bin/python3 &&\
-    # Create a fake system Python pointing at venv python
-    echo 'exec /opt/venv/bin/python3.10 "$@"' > /usr/bin/python &&\
+    libxml2 libmagick++-6.q16-8 libnode-dev
+
+ARG UV_VERSION=0.9.2
+ARG UV_PLATFORM=uv-x86_64-unknown-linux-gnu.tar.gz
+
+# hadolint ignore=DL3008
+RUN set -eux; \
+    # Fetch uv from GitHub Releases
+    UV_BASE="https://github.com/astral-sh/uv/releases/download/${UV_VERSION}"; \
+    curl -fSL "${UV_BASE}/${UV_PLATFORM}" -o /tmp/${UV_PLATFORM}; \
+    mkdir -p /tmp/uv-extract && tar -xzf /tmp/${UV_PLATFORM} --strip-components=1 -C /tmp/uv-extract; \
+    install -m 0755 /tmp/uv-extract/uv /usr/local/bin/uv; \
+    rm -rf /tmp/uv-extract; \
+    # Use uv to install Python 3.10.
+    # Python 3.10 is the version used by the python-docker
+    # v2 image, used for analyses using the OpenSAFELY pipeline.
+    /usr/local/bin/uv python install 3.10 --install-dir /opt/uv-python --default; \
+    # Create default python symlinks…
+    /usr/local/bin/uv python update-shell; \
+    # … and move them to be accessible to all users.
+    rm -f /usr/bin/python3 && mv /root/.local/bin/python3* /usr/bin/; \
+    echo 'exec /opt/venv/bin/python3.10 "$@"' > /usr/bin/python && chmod +x /usr/bin/python; \
+    # Pip for Python 3.10 isn't included, so install separately
+    curl https://bootstrap.pypa.io/get-pip.py -o /tmp/get-pip.py; \
+    python3.10 /tmp/get-pip.py --break-system-packages; \
+    # Create a system virtualenv at /opt/venv (and upgrade pip)
+    /usr/bin/python3 -m venv /opt/venv; \
+    /opt/venv/bin/python -m pip install --upgrade pip setuptools wheel; \
     # Activate the venv in every terminal
     echo "source /opt/venv/bin/activate" >> /home/rstudio/.bashrc &&\
     # Print the MOTD/help text in every shell
