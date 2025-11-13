@@ -43,12 +43,12 @@ RUN set -eux; \
     # … and move them to be accessible to all users.
     rm -f /usr/bin/python3 && mv /root/.local/bin/python3* /usr/bin/; \
     echo 'exec /opt/venv/bin/python3.10 "$@"' > /usr/bin/python && chmod +x /usr/bin/python; \
-    # Pip for Python 3.10 isn't included, so install separately
+    # pip isn't included, so install separately
     curl https://bootstrap.pypa.io/get-pip.py -o /tmp/get-pip.py; \
     python3.10 /tmp/get-pip.py --break-system-packages; \
-    # Create a system virtualenv at /opt/venv (and upgrade pip)
+    # Create a system virtualenv at /opt/venv,
     /usr/bin/python3 -m venv /opt/venv; \
-    # Activate the venv in every terminal
+    # Activate the venv in every terminal.
     echo "source /opt/venv/bin/activate" >> /home/rstudio/.bashrc &&\
     # Print the MOTD/help text in every shell
     echo "cat /etc/motd" >> /home/rstudio/.bashrc &&\
