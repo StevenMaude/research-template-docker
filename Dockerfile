@@ -25,14 +25,12 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     # Install dependencies for R tidyverse, knitr, and dagitty packages.
     libxml2 libmagick++-6.q16-8 libnode-dev
 
-ARG UV_VERSION=0.9.2
 ARG UV_PLATFORM=uv-x86_64-unknown-linux-gnu.tar.gz
 
 # hadolint ignore=DL3008
 RUN set -eux; \
     # Fetch uv from GitHub Releases
-    UV_BASE="https://github.com/astral-sh/uv/releases/download/${UV_VERSION}"; \
-    curl -fSL "${UV_BASE}/${UV_PLATFORM}" -o /tmp/${UV_PLATFORM}; \
+    curl -fSL "https://github.com/astral-sh/uv/releases/latest/download/${UV_PLATFORM}" -o /tmp/${UV_PLATFORM}; \
     mkdir -p /tmp/uv-extract && tar -xzf /tmp/${UV_PLATFORM} --strip-components=1 -C /tmp/uv-extract; \
     install -m 0755 /tmp/uv-extract/uv /usr/local/bin/uv; \
     rm -rf /tmp/uv-extract; \
@@ -50,7 +48,6 @@ RUN set -eux; \
     python3.10 /tmp/get-pip.py --break-system-packages; \
     # Create a system virtualenv at /opt/venv (and upgrade pip)
     /usr/bin/python3 -m venv /opt/venv; \
-    /opt/venv/bin/python -m pip install --upgrade pip setuptools wheel; \
     # Activate the venv in every terminal
     echo "source /opt/venv/bin/activate" >> /home/rstudio/.bashrc &&\
     # Print the MOTD/help text in every shell
