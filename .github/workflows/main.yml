@@ -4,7 +4,7 @@ name: CI
 env:
   IMAGE_NAME: research-template
   IMAGE_VERSION: v0
-  PUBLIC_IMAGE_NAME: ghcr.io/StevenMaude/research-template
+  PUBLIC_IMAGE_NAME: ghcr.io/stevenmaude/research-template
   REGISTRY: ghcr.io
 
 on:
