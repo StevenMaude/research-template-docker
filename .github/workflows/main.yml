@@ -4,7 +4,7 @@ name: CI
 env:
   IMAGE_NAME: research-template
   IMAGE_VERSION: v0
-  PUBLIC_IMAGE_NAME: ghcr.io/opensafely-core/research-template
+  PUBLIC_IMAGE_NAME: ghcr.io/StevenMaude/research-template
   REGISTRY: ghcr.io
 
 on:
@@ -12,8 +12,6 @@ on:
   pull_request:
   push:
     branches: [main]
-  schedule:
-    - cron: "0 12 * * SUN"
 
 permissions:
   contents: read
@@ -124,20 +122,3 @@ jobs:
             docker tag "$IMAGE_NAME" "$PUBLIC_IMAGE_NAME:latest"
             docker push "$PUBLIC_IMAGE_NAME:$IMAGE_VERSION"
             docker push "$PUBLIC_IMAGE_NAME:latest"
-
-  notify-slack-on-scheduled-failures:
-    needs: [build, test-docker-image, publish]
-
-    runs-on: ubuntu-latest
-
-    if: ${{ !cancelled() && github.event_name == 'schedule' && contains(needs.*.result, 'failure') }}
-
-    steps:
-      - name: Notify Slack on failure
-        uses: zuplo/github-action-slack-notify-build@cf8e7e66a21d76a8125ea9648979c30920195552 # v2
-        env:
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
-        with:
-          channel_id: C0A8AJA249K
-          status: "Scheduled Research Template Docker image build or publish failure"
-          color: danger
